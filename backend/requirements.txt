@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlmodel
+psycopg2-binary
+qdrant-client
+langgraph
+google-generativeai
+pydantic
+pydantic-settings
+python-multipart
+python-dotenv
+pdfplumber
+pytest
+httpx

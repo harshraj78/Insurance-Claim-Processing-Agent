@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: claim-db
+    environment:
+      POSTGRES_DB: claims_db
+      POSTGRES_USER: claims_user
+      POSTGRES_PASSWORD: claims_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - claim-network
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: claim-vector-db
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - claim-network
+
+  backend:
+    build: ./backend
+    container_name: claim-backend
+    environment:
+      - DATABASE_URL=postgresql://claims_user:claims_password@postgres:5432/claims_db
+      - QDRANT_URL=http://qdrant:6333
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - MODEL_PROVIDER=google
+      - MODEL_NAME=gemini-2.5-flash
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - postgres
+      - qdrant
+    networks:
+      - claim-network
+
+  frontend:
+    build: ./frontend
+    container_name: claim-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - claim-network
+
+volumes:
+  pgdata:
+  qdrant_storage:
+
+networks:
+  claim-network:
+    driver: bridge

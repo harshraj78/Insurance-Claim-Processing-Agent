@@ -1,0 +1,37 @@
+# Python ignore
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+*.db
+claims.db
+test.db
+
+# Node/Vite ignore
+node_modules/
+dist/
+dist-ssr/
+*.local
+.eslintcache
+
+# Local Ingestion files (prevent checking in PDFs)
+backend/uploads/
+uploads/
+
+# Docker volumes storage paths (if run locally outside container mapping)
+pgdata/
+qdrant_storage/
+
+# IDE / System ignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+.env
+backend/.env
+
