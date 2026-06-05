@@ -24,16 +24,53 @@ def document_extraction_node(state: ClaimState) -> Dict[str, Any]:
     """
     print("--- [Node: DocumentExtractionNode] ---")
     
-    # Extract Policy Metadata
+    from sqlmodel import Session, select
+    from app.db.database import engine
+    from app.db.models import Policy, Claim
+    
+    fallback_number = state.get("policy_number", "POL-1001")
+    fallback_holder = "John Doe"
+    fallback_limit = 500000.0
+    fallback_amount = 45000.0
+    
+    try:
+        with Session(engine) as session:
+            # Fetch actual policy values
+            stmt_policy = select(Policy).where(Policy.policy_number == fallback_number)
+            policy_rec = session.exec(stmt_policy).first()
+            if policy_rec:
+                fallback_holder = policy_rec.policy_holder
+                fallback_limit = float(policy_rec.coverage_limit)
+                
+            # Fetch actual claim amount
+            claim_id_str = state.get("claim_id")
+            if claim_id_str:
+                import uuid
+                claim_uuid = uuid.UUID(claim_id_str) if isinstance(claim_id_str, str) else claim_id_str
+                claim_rec = session.get(Claim, claim_uuid)
+                if claim_rec:
+                    fallback_amount = float(claim_rec.claim_amount)
+    except Exception as e:
+        print(f"Could not load database records for extraction fallback: {e}")
+        
+    # Extract Policy Metadata using dynamic database fallbacks
     extracted_policy = document_extraction_tool(
         state["policy_pdf_url"], 
-        document_type="policy"
+        document_type="policy",
+        fallback_number=fallback_number,
+        fallback_holder=fallback_holder,
+        fallback_limit=fallback_limit,
+        fallback_amount=fallback_amount
     )
     
-    # Extract Claim Metadata
+    # Extract Claim Metadata using dynamic database fallbacks
     extracted_claim = document_extraction_tool(
         state["claim_pdf_url"], 
-        document_type="claim"
+        document_type="claim",
+        fallback_number=fallback_number,
+        fallback_holder=fallback_holder,
+        fallback_limit=fallback_limit,
+        fallback_amount=fallback_amount
     )
     
     # Generate audit log entry

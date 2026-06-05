@@ -4,6 +4,7 @@ import json
 import uuid
 from typing import Dict, Any, List
 from unittest.mock import patch
+from langsmith import Client
 
 # Ensure backend root is in python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -64,6 +65,56 @@ def run_llm_judge(case: Dict[str, Any], state_output: Dict[str, Any]) -> Dict[st
             "justification": f"LLM Judge API failed: {e}. Defaulting to programmatic pass."
         }
 
+def log_run_to_langsmith(case: Dict[str, Any], state_output: Dict[str, Any], passed: bool):
+    """
+    Optional: Uploads evaluation cases and feedback metrics directly to LangSmith datasets if configured.
+    """
+    if not settings.LANGCHAIN_API_KEY:
+        return
+        
+    try:
+        client = Client()
+        dataset_name = "Claims Verification Dataset"
+        
+        # Check if dataset exists, otherwise create it
+        if not client.has_dataset(dataset_name=dataset_name):
+            dataset = client.create_dataset(
+                dataset_name=dataset_name,
+                description="Test cases for verifying claim eligibility and limit checks."
+            )
+            print(f"Created LangSmith dataset: {dataset_name}")
+        else:
+            dataset = client.read_dataset(dataset_name=dataset_name)
+            
+        inputs = {
+            "claimed_treatment": case["claimed_treatment"],
+            "claim_amount": case["claim_amount"],
+            "policy_limit": case["policy_limit"],
+            "past_claims_total": case["past_claims_total"]
+        }
+        outputs = {
+            "expected_recommendation": case["expected_recommendation"]
+        }
+        
+        # Check if example exists
+        examples = list(client.list_examples(dataset_id=dataset.id))
+        exists = any(
+            e.inputs.get("claimed_treatment") == inputs["claimed_treatment"] and
+            e.inputs.get("claim_amount") == inputs["claim_amount"]
+            for e in examples
+        )
+        
+        if not exists:
+            client.create_example(
+                inputs=inputs,
+                outputs=outputs,
+                dataset_id=dataset.id
+            )
+            print(f"Uploaded test case example to LangSmith: {case['id']}")
+            
+    except Exception as e:
+        print(f"Failed to sync with LangSmith: {e}")
+
 def execute_evaluation():
     print("==================================================")
     print("STARTING AUTOMATED LLM-AS-A-JUDGE EVALUATION SUITE")
@@ -113,7 +164,7 @@ def execute_evaluation():
              patch("app.workflow.nodes.claim_history_tool") as mock_history_tool:
             
             # Setup tool side effects
-            mock_extract_tool.side_effect = lambda path, document_type: mock_extraction[document_type]
+            mock_extract_tool.side_effect = lambda path, document_type, **kwargs: mock_extraction[document_type]
             mock_history_tool.return_value = mock_history
             
             thread_id = str(uuid.uuid4())
@@ -178,6 +229,9 @@ def execute_evaluation():
             print(f"Expected: {expected} | Actual: {rec_status}")
             print(f"Reasoning matches check: {'Pass' if reason_ok else 'Fail'}")
             print(f"Judge Score: {judge_res['score']}/5 | Justification: {judge_res['justification']}")
+            
+            # Sync run to LangSmith
+            log_run_to_langsmith(case, final_state, case_passed)
             
             report_data.append({
                 "case_id": case["id"],

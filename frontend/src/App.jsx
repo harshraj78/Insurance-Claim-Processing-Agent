@@ -14,10 +14,11 @@ import {
   UserCheck,
   Eye
 } from 'lucide-react';
+import { SignedIn, SignedOut, SignIn, useAuth, UserButton } from '@clerk/clerk-react';
 
 const API_BASE = 'http://localhost:8000';
 
-function App() {
+function Dashboard({ mockMode = true, getToken }) {
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' or 'details'
   const [claims, setClaims] = useState([]);
   const [selectedClaimId, setSelectedClaimId] = useState(null);
@@ -43,11 +44,28 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Request Headers Generator for Clerk JWT / Mock Developer Mode
+  const getRequestHeaders = async (actionType, isMultipart = false) => {
+    const baseHeaders = {};
+    if (isMultipart) {
+      baseHeaders['Content-Type'] = 'multipart/form-data';
+    }
+    if (mockMode) {
+      const mockUser = actionType === 'submit_claim' ? 'customer@example.com' : 'officer@example.com';
+      baseHeaders['X-Mock-User'] = mockUser;
+    } else {
+      const token = await getToken({ template: 'neon_rls' });
+      baseHeaders['Authorization'] = `Bearer ${token}`;
+    }
+    return { headers: baseHeaders };
+  };
+
   // Fetch Claims
   const fetchClaims = async () => {
     setRefreshing(true);
     try {
-      const res = await axios.get(`${API_BASE}/claims`);
+      const headers = await getRequestHeaders('view_claims');
+      const res = await axios.get(`${API_BASE}/claims`, headers);
       setClaims(res.data);
     } catch (err) {
       console.error('Error fetching claims:', err);
@@ -64,7 +82,8 @@ function App() {
   const fetchClaimDetails = async (id) => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE}/claims/${id}`);
+      const headers = await getRequestHeaders('view_claims');
+      const res = await axios.get(`${API_BASE}/claims/${id}`, headers);
       setClaimDetails(res.data);
       setSelectedClaimId(id);
     } catch (err) {
@@ -90,9 +109,8 @@ function App() {
     setLoading(true);
     setClaimMsg(null);
     try {
-      await axios.post(`${API_BASE}/claims/submit`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const headers = await getRequestHeaders('submit_claim', true);
+      await axios.post(`${API_BASE}/claims/submit`, formData, headers);
       setClaimMsg({ type: 'success', text: 'Claim submitted successfully. Agent graph run paused at Human verification step.' });
       setPolicyNo('');
       setClaimAmt('');
@@ -123,9 +141,8 @@ function App() {
     setLoading(true);
     setPolicyMsg(null);
     try {
-      await axios.post(`${API_BASE}/policies/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const headers = await getRequestHeaders('upload_policy', true);
+      await axios.post(`${API_BASE}/policies/upload`, formData, headers);
       setPolicyMsg({ type: 'success', text: 'Policy successfully registered and embedded into Qdrant vector database!' });
       setRegPolicyNo('');
       setRegHolder('');
@@ -151,7 +168,9 @@ function App() {
     setLoading(true);
     setActionMsg(null);
     try {
-      const res = await axios.post(`${API_BASE}/claims/${selectedClaimId}/action`, formData);
+      const headers = await getRequestHeaders('claim_action');
+      headers.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      const res = await axios.post(`${API_BASE}/claims/${selectedClaimId}/action`, formData, headers);
       setActionMsg({ type: 'success', text: res.data.message });
       setOfficerNotes('');
       // Reload details & queue
@@ -189,6 +208,12 @@ function App() {
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Human-in-the-Loop Claims Processing Engine</p>
           </div>
         </div>
+        
+        {!mockMode && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '1.5rem' }}>
+            <UserButton afterSignOutUrl="/" />
+          </div>
+        )}
         
         <nav className="nav-tabs">
           <button 
@@ -670,4 +695,42 @@ function App() {
   );
 }
 
+function DashboardSecure() {
+  const { getToken } = useAuth();
+  return <Dashboard mockMode={false} getToken={getToken} />;
+}
+
+function AuthWrapper() {
+  return (
+    <>
+      <SignedIn>
+        <DashboardSecure />
+      </SignedIn>
+      <SignedOut>
+        <div className="min-h-screen flex flex-col justify-center items-center bg-slate-950 text-slate-100 p-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <div className="glass-card max-w-md w-full p-8 rounded-2xl border border-slate-800 text-center" style={{ background: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <div className="flex justify-center mb-6" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+              <ShieldCheck className="w-16 h-16 text-teal-400" size={64} style={{ color: '#2dd4bf' }} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>ClaimsAgent AI Portal</h1>
+            <p className="text-slate-400 mb-6" style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Sign in to access your claims queue, verify policies, and view audit trails.</p>
+            <div className="flex justify-center" style={{ display: 'flex', justifyContent: 'center' }}>
+              <SignIn routing="hash" />
+            </div>
+          </div>
+        </div>
+      </SignedOut>
+    </>
+  );
+}
+
+function App() {
+  const isClerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  if (isClerkEnabled) {
+    return <AuthWrapper />;
+  }
+  return <Dashboard mockMode={true} />;
+}
+
 export default App;
+

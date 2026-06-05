@@ -82,7 +82,8 @@ def test_policy_upload():
                         "policy_holder": "Alice Johnson",
                         "coverage_limit": 300000.0
                     },
-                    files={"file": ("test_policy.pdf", f_in, "application/pdf")}
+                    files={"file": ("test_policy.pdf", f_in, "application/pdf")},
+                    headers={"X-Mock-User": "officer@example.com"}
                 )
             assert response.status_code == 201, f"Error: {response.text}"
             assert response.json()["policy_number"] == "POL-9999"
@@ -114,7 +115,8 @@ def test_claim_submission_and_approval():
                 pol_res = client.post(
                     "/policies/upload",
                     data={"policy_number": "POL-8888", "policy_holder": "Alice Johnson", "coverage_limit": 300000.0},
-                    files={"file": ("test_policy.pdf", f, "application/pdf")}
+                    files={"file": ("test_policy.pdf", f, "application/pdf")},
+                    headers={"X-Mock-User": "officer@example.com"}
                 )
                 assert pol_res.status_code == 201, f"Policy upload failed: {pol_res.text}"
 
@@ -127,7 +129,8 @@ def test_claim_submission_and_approval():
                         "claim_amount": 45000.0,
                         "customer_email": "customer@example.com"
                     },
-                    files={"file": ("test_claim.pdf", f, "application/pdf")}
+                    files={"file": ("test_claim.pdf", f, "application/pdf")},
+                    headers={"X-Mock-User": "customer@example.com"}
                 )
             assert response.status_code == 202, f"Claim submit failed: {response.text}"
             assert response.json()["status"] == "pending_approval"
@@ -152,7 +155,8 @@ def test_claim_submission_and_approval():
                     "action": "APPROVED",
                     "notes": "Verified requirements, claim approved",
                     "officer_email": "officer@example.com"
-                }
+                },
+                headers={"X-Mock-User": "officer@example.com"}
             )
             assert action_res.status_code == 200, f"Action failed: {action_res.text}"
             assert action_res.json()["status"] == "approved"
