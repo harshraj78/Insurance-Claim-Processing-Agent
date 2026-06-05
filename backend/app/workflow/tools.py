@@ -127,20 +127,78 @@ def document_extraction_tool(file_path: str, document_type: str) -> Dict[str, An
         
     return data
 
+def query_expansion_tool(treatment_term: str) -> List[str]:
+    """
+    Expands a raw treatment term into 3 semantic query variations to improve search coverage in vector store.
+    """
+    print(f"Executing query_expansion_tool on term: '{treatment_term}'")
+    # Always include the original term
+    queries = [treatment_term]
+    if settings.GEMINI_API_KEY:
+        try:
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            prompt = (
+                f"You are a medical search optimizer. Expand the treatment or diagnostic term '{treatment_term}' "
+                f"into 3 distinct search terms or phrases suitable for retrieving coverage details from an insurance policy document.\n"
+                f"For example, 'Appendectomy' could expand to: ['appendectomy coverage exclusions', 'surgical removal of appendix', 'appendix surgery wait times'].\n"
+                f"Return JSON list of strings only, containing the 3 expanded query variations. Do not include markdown formatting or code blocks."
+            )
+            response = model.generate_content(
+                prompt,
+                generation_config={"response_mime_type": "application/json"}
+            )
+            expanded = json.loads(response.text)
+            if isinstance(expanded, list):
+                expanded_strs = [str(item).strip() for item in expanded if item]
+                if expanded_strs:
+                    queries.extend(expanded_strs)
+        except Exception as e:
+            print(f"Query expansion Gemini call failed: {e}. Using fallback variations.")
+            
+    if len(queries) <= 1:
+        # Fallback variations for offline or API error
+        clean_term = treatment_term.lower().strip()
+        queries.extend([
+            f"{clean_term} coverage exclusions",
+            f"{clean_term} waiting period",
+            f"surgical treatment for {clean_term}"
+        ])
+        
+    return list(set(queries)) # Return de-duplicated list
+
 def policy_lookup_tool(policy_id: str, treatment_term: str) -> List[str]:
     """
-    RAG search to fetch relevant clauses from Qdrant vector database.
+    RAG search to fetch relevant clauses from Qdrant vector database using query expansion.
     """
     print(f"Executing policy_lookup_tool query on Policy ID: {policy_id} for term: '{treatment_term}'")
-    try:
-        return search_policy_clauses(policy_id, treatment_term, limit=3)
-    except Exception as e:
-        print(f"Error fetching from vector DB: {e}. Returning mock clauses.")
+    
+    expanded_queries = query_expansion_tool(treatment_term)
+    print(f"Expanded queries for retrieval: {expanded_queries}")
+    
+    all_clauses = []
+    seen = set()
+    
+    # Query Qdrant for each expanded search query
+    for query in expanded_queries:
+        try:
+            clauses = search_policy_clauses(policy_id, query, limit=2)
+            for clause in clauses:
+                if clause not in seen:
+                    seen.add(clause)
+                    all_clauses.append(clause)
+        except Exception as e:
+            print(f"Error fetching query '{query}' from vector DB: {e}")
+            
+    if not all_clauses:
+        print("No clauses retrieved from Qdrant. Returning mock clauses.")
         return [
             f"Clause 3.2: Medical surgeries such as {treatment_term} are covered up to the specified limit.",
             "Clause 4.5: Pre-existing conditions wait times are set at 90 days for surgical coverage.",
             "Clause 7.1: Cosmetic procedures are strictly excluded from claims clearance."
         ]
+        
+    # Limit to top 4 unique clauses to keep state context size reasonable
+    return all_clauses[:4]
 
 def claim_history_tool(customer_id: str) -> List[Dict[str, Any]]:
     """

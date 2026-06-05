@@ -1,0 +1,46 @@
+[
+  {
+    "id": "eval_01",
+    "description": "Standard Claim under limit and covered treatment",
+    "policy_id": "POL-1001",
+    "policy_limit": 500000.0,
+    "claimed_treatment": "Appendectomy",
+    "claim_amount": 45000.0,
+    "past_claims_total": 50000.0,
+    "expected_recommendation": "APPROVE",
+    "must_contain_reasons": ["under limit", "covered", "eligibility"]
+  },
+  {
+    "id": "eval_02",
+    "description": "Exceeds Remaining Coverage Limit",
+    "policy_id": "POL-1001",
+    "policy_limit": 500000.0,
+    "claimed_treatment": "Knee Replacement",
+    "claim_amount": 480000.0,
+    "past_claims_total": 100000.0,
+    "expected_recommendation": "REJECT",
+    "must_contain_reasons": ["exceed", "limit", "math", "balance"]
+  },
+  {
+    "id": "eval_03",
+    "description": "Excluded Cosmetic Procedure",
+    "policy_id": "POL-1001",
+    "policy_limit": 500000.0,
+    "claimed_treatment": "Cosmetic Rhinoplasty",
+    "claim_amount": 120000.0,
+    "past_claims_total": 0.0,
+    "expected_recommendation": "REJECT",
+    "must_contain_reasons": ["cosmetic", "exclud"]
+  },
+  {
+    "id": "eval_04",
+    "description": "Waiting Period Exclusion Check",
+    "policy_id": "POL-1002",
+    "policy_limit": 250000.0,
+    "claimed_treatment": "Pre-existing Diabetes Cataract Surgery",
+    "claim_amount": 75000.0,
+    "past_claims_total": 0.0,
+    "expected_recommendation": "REJECT",
+    "must_contain_reasons": ["wait", "period", "pre-existing", "exclud"]
+  }
+]
