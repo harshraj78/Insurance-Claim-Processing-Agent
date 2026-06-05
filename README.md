@@ -96,8 +96,14 @@ Create a `.env` file in the `backend/` directory:
 DATABASE_URL=sqlite:///./claims.db
 GEMINI_API_KEY=your_gemini_api_key
 QDRANT_URL=http://localhost:6333
+
+# Optional: LangSmith Observability Tracing
+LANGCHAIN_TRACING_V2=false
+LANGCHAIN_API_KEY=your_langsmith_api_key
+LANGCHAIN_PROJECT=insurance-claims-processing
 ```
 > **Note**: If no `GEMINI_API_KEY` is provided, the backend automatically engages deterministic regex parsers and mock vector generators to allow running fully offline.
+
 
 Start the backend:
 ```bash
@@ -134,15 +140,26 @@ You can spin up the entire application stack—including Qdrant, the API, and th
 
 ---
 
-## 🧪 Automated Testing
+## 🧪 Testing & Evaluation
 
-Unit tests bypass external database setups and test the LangGraph workflow using an in-memory SQLite setup:
+### 1. Automated Unit Tests (pytest)
+Unit tests bypass external database setups and test the core LangGraph state transitions and API endpoints using an in-memory SQLite setup:
 ```bash
 cd backend
-pytest
+python -m pytest
 ```
+
+### 2. LLM-as-a-Judge Evaluation Suite
+We have built an automated evaluation suite to test the quality of recommendations, eligibility verdicts, and coverage calculations across multiple claim scenarios:
+```bash
+cd backend
+python -m app.evals.eval_runner
+```
+*   **Dataset**: Loaded from [dataset.json](file:///C:/Users/Utkarsh%20Raj/.gemini/antigravity/scratch/insurance-claim-processing-agent/backend/app/evals/dataset.json) covering standard, over-limit, general exclusion, and waiting period claims.
+*   **Methodology**: Runs mock claims through the full LangGraph pipeline using tool mocking and sends output payloads to a secondary Gemini LLM judge.
+*   **Report**: Compiles and outputs scores and justifications to a markdown summary at [eval_report.md](file:///C:/Users/Utkarsh%20Raj/.gemini/antigravity/scratch/insurance-claim-processing-agent/backend/app/evals/eval_report.md).
 
 ---
 
 ## 🌐 Deploying to the Web
-For detailed, step-by-step instructions on deploying the project for free (using **Neon PostgreSQL**, **Render**, and **Vercel**), refer to our [Deployment Guide](backend/../deployment_guide.md).
+For detailed, step-by-step instructions on deploying the project for free (using **Neon PostgreSQL**, **Render**, and **Vercel**), refer to our [Deployment Guide](deployment_guide.md).
