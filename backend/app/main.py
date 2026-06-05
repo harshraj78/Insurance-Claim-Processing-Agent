@@ -54,6 +54,10 @@ def on_startup():
 def read_root():
     return {"message": "Insurance Claim Processing Agent Backend is running."}
 
+@app.get("/users/me", response_model=User)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
 # ==================== POLICIES API ====================
 
 @app.post("/policies/upload", status_code=status.HTTP_201_CREATED)
@@ -247,11 +251,21 @@ def submit_claim(
     }
 
 @app.get("/claims")
-def list_claims(session: Session = Depends(get_session)):
-    return session.exec(select(Claim).order_by(Claim.created_at.desc())).all()
+def list_claims(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role == "claim_officer":
+        return session.exec(select(Claim).order_by(Claim.created_at.desc())).all()
+    else:
+        return session.exec(select(Claim).where(Claim.customer_id == current_user.id).order_by(Claim.created_at.desc())).all()
 
 @app.get("/claims/{id}")
-def get_claim_details(id: uuid.UUID, session: Session = Depends(get_session)):
+def get_claim_details(
+    id: uuid.UUID, 
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     """
     Returns SQL claim metadata, audit logs, and the current active 
     LangGraph checkpoint state values (for the Explainability Panel).
@@ -259,6 +273,12 @@ def get_claim_details(id: uuid.UUID, session: Session = Depends(get_session)):
     claim = session.get(Claim, id)
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
+        
+    if current_user.role != "claim_officer" and claim.customer_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. You can only view details of your own claims."
+        )
         
     logs = session.exec(select(AuditLog).where(AuditLog.claim_id == id)).all()
     

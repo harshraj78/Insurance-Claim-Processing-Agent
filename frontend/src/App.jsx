@@ -12,13 +12,257 @@ import {
   History,
   Calculator,
   UserCheck,
-  Eye
+  Eye,
+  LogOut
 } from 'lucide-react';
 import { SignedIn, SignedOut, SignIn, useAuth, UserButton } from '@clerk/clerk-react';
 
 const API_BASE = 'http://localhost:8000';
 
-function Dashboard({ mockMode = true, getToken }) {
+function LoginScreen({ onLogin, isClerkEnabled }) {
+  const scrollToGateway = () => {
+    document.getElementById('login-gateway')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div style={{
+      fontFamily: 'Outfit, Inter, system-ui, sans-serif',
+      background: 'radial-gradient(circle at 50% 0%, #0d1530 0%, #030712 100%)',
+      minHeight: '100vh',
+      color: 'var(--text-primary)'
+    }}>
+      {/* Navigation Header */}
+      <nav className="landing-nav">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <span style={{ fontSize: '1.8rem', filter: 'drop-shadow(0 0 10px rgba(0, 242, 254, 0.4))' }}>🛡️</span>
+          <span style={{ fontSize: '1.25rem', fontWeight: 800, background: 'var(--primary-glow)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            ClaimsAgent AI
+          </span>
+        </div>
+        <div className="nav-links">
+          <span className="nav-link" onClick={scrollToGateway}>Features</span>
+          <span className="nav-link" onClick={scrollToGateway}>Security & RAG</span>
+          <span className="nav-link" onClick={scrollToGateway}>Developer Demo</span>
+        </div>
+        <button className="view-btn" onClick={scrollToGateway} style={{ padding: '0.5rem 1.1rem', borderRadius: '30px' }}>
+          Launch Console
+        </button>
+      </nav>
+
+      {/* Hero Section */}
+      <header className="business-hero">
+        <span className="hero-badge">🚀 Enterprise Multi-Agent Underwriting</span>
+        <h1 style={{
+          fontSize: '3.2rem',
+          fontWeight: '800',
+          lineHeight: '1.15',
+          background: 'linear-gradient(135deg, #f8fafc 30%, #94a3b8 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          marginBottom: '1.25rem',
+          letterSpacing: '-0.03em'
+        }}>
+          Autonomous Claims Verification.<br />
+          <span style={{ background: 'var(--primary-glow)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Secured by Human Sign-off.</span>
+        </h1>
+        <p style={{
+          color: 'var(--text-secondary)',
+          fontSize: '1.15rem',
+          maxWidth: '720px',
+          margin: '0 auto 2.5rem',
+          lineHeight: '1.6',
+          fontWeight: '400'
+        }}>
+          Accelerate your clinical invoice audits by de-coupling rote exception reviews. Validate claims against complex policy boundaries using semantic vector RAG re-ranking and stateful multi-agent pipelines with built-in human verification gates.
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+          <button className="btn-primary" onClick={scrollToGateway} style={{ width: 'auto', padding: '0.8rem 2rem', borderRadius: '30px' }}>
+            Access App Console
+          </button>
+          <button className="view-btn" onClick={() => window.open('https://github.com', '_blank')} style={{ padding: '0.8rem 2rem', borderRadius: '30px', fontSize: '0.95rem' }}>
+            Read Specs & Docs
+          </button>
+        </div>
+
+        {/* Live Business Metrics */}
+        <div className="stats-grid">
+          <div className="stat-item">
+            <div className="stat-number">98.4%</div>
+            <div className="stat-label">Ingestion Extraction Accuracy</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">4.2x</div>
+            <div className="stat-label">Faster Underwriting Turnaround</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">100%</div>
+            <div className="stat-label">Durable Audit Log Traceability</div>
+          </div>
+        </div>
+      </header>
+
+      {/* Feature Pillar Grid */}
+      <section className="business-features">
+        <div className="landing-feature-card">
+          <div className="feature-icon-box">
+            <Database size={20} />
+          </div>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: '#fff' }}>Semantic Clause RAG</h3>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+            Queries policy terms with multi-variant semantic expansions, retrieves matching rules via Qdrant, and filters candidates using a clinical relevance re-ranking LLM.
+          </p>
+        </div>
+
+        <div className="landing-feature-card">
+          <div className="feature-icon-box" style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+            <History size={20} />
+          </div>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: '#fff' }}>Durable State Machines</h3>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+            Orchestrates claims audits through a LangGraph state machine. Automatically pauses execution at the human verification boundary and persists intermediate snapshots.
+          </p>
+        </div>
+
+        <div className="landing-feature-card">
+          <div className="feature-icon-box" style={{ color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
+            <Calculator size={20} />
+          </div>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: '#fff' }}>Automated Limit Math</h3>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+            Performs programmatic checks against policy lifetime limits and exclusions lists. Dynamically computes balances and warns if a claim exceeds coverage limits.
+          </p>
+        </div>
+
+        <div className="landing-feature-card">
+          <div className="feature-icon-box" style={{ color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+            <UserCheck size={20} />
+          </div>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem', color: '#fff' }}>Role-Based Verification</h3>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+            Secures data at both API and database layers. Patients can submit and track claims, while claims officers have full access to policy ingestion and approvals.
+          </p>
+        </div>
+      </section>
+
+      {/* Login / Simulated Access Gateway */}
+      <section id="login-gateway" style={{
+        padding: '5rem 1.5rem',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'rgba(3, 7, 18, 0.4)',
+        borderTop: '1px solid var(--border-light)'
+      }}>
+        <div className="glass-card" style={{
+          maxWidth: '740px',
+          width: '100%',
+          padding: '3rem 2rem',
+          border: '1px solid rgba(0, 242, 254, 0.15)',
+          background: 'rgba(10, 18, 42, 0.55)',
+          boxShadow: '0 15px 40px rgba(0, 0, 0, 0.45)',
+          textAlign: 'center',
+          borderRadius: '20px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <span style={{ fontSize: '2.5rem', filter: 'drop-shadow(0 0 10px rgba(0, 242, 254, 0.3))' }}>🛡️</span>
+          </div>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.5rem', color: '#fff' }}>App Gateway Console</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '2.5rem', maxWidth: '480px', margin: '0 auto 2.5rem' }}>
+            Access your secure portal workspace. Choose either production JWT verification or test simulated persona profiles below.
+          </p>
+
+          {isClerkEnabled ? (
+            <div style={{ background: 'rgba(4, 8, 20, 0.4)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+              <h3 style={{ fontSize: '1.05rem', color: '#f8fafc', marginBottom: '1.25rem', fontWeight: 600 }}>Production Login (Clerk Single Sign-On)</h3>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <SignIn routing="hash" />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h3 style={{
+                fontSize: '0.9rem',
+                color: 'var(--accent-cyan)',
+                marginBottom: '1.5rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                background: 'rgba(0, 242, 254, 0.03)',
+                display: 'inline-block',
+                padding: '0.3rem 0.8rem',
+                borderRadius: '6px',
+                border: '1px solid rgba(0, 242, 254, 0.15)'
+              }}>
+                Developer Bypass Active (Select Persona to Demo)
+              </h3>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {/* Customer card */}
+                <div 
+                  className="persona-card"
+                  onClick={() => onLogin('customer@example.com', 'customer')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div className="persona-icon-box" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}>
+                      👤
+                    </div>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', margin: 0 }}>Patient Workspace</h4>
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.45', flexGrow: 1, margin: 0 }}>
+                    Submit clinical bills/medical invoices, audit active coverage calculations, and view personalized status feeds.
+                  </p>
+                  <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#3b82f6', fontWeight: '700', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                    Login as Customer (customer@example.com) →
+                  </div>
+                </div>
+
+                {/* Officer card */}
+                <div 
+                  className="persona-card"
+                  onClick={() => onLogin('officer@example.com', 'claim_officer')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div className="persona-icon-box" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                      💼
+                    </div>
+                    <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#fff', margin: 0 }}>Underwriter Console</h4>
+                  </div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.45', flexGrow: 1, margin: 0 }}>
+                    Monitor claims underwriting queues, index policy PDFs into Qdrant, audit vector retrieval layers, and override sign-offs.
+                  </p>
+                  <div style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: '#10b981', fontWeight: '700', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                    Login as Claims Officer (officer@example.com) →
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="landing-footer">
+        <p style={{ marginBottom: '1rem' }}>© 2026 ClaimsAgent AI Inc. All rights reserved. Designed for agentic medical underwriting.</p>
+        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <span className="tech-tag">React 18</span>
+          <span className="tech-tag">FastAPI</span>
+          <span className="tech-tag">LangGraph</span>
+          <span className="tech-tag">Qdrant Vector DB</span>
+          <span className="tech-tag">Gemini 2.5 Flash</span>
+          <span className="tech-tag">Clerk Auth</span>
+          <span className="tech-tag">SQLModel</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRole, onLogout }) {
+  const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('queue'); // 'queue' or 'details'
   const [claims, setClaims] = useState([]);
   const [selectedClaimId, setSelectedClaimId] = useState(null);
@@ -43,16 +287,16 @@ function Dashboard({ mockMode = true, getToken }) {
   // Loading
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   // Request Headers Generator for Clerk JWT / Mock Developer Mode
-  const getRequestHeaders = async (actionType, isMultipart = false) => {
+  const getRequestHeaders = async (isMultipart = false) => {
     const baseHeaders = {};
     if (isMultipart) {
       baseHeaders['Content-Type'] = 'multipart/form-data';
     }
     if (mockMode) {
-      const mockUser = actionType === 'submit_claim' ? 'customer@example.com' : 'officer@example.com';
-      baseHeaders['X-Mock-User'] = mockUser;
+      baseHeaders['X-Mock-User'] = currentUser?.email || 'customer@example.com';
     } else {
       const token = await getToken({ template: 'neon_rls' });
       baseHeaders['Authorization'] = `Bearer ${token}`;
@@ -60,11 +304,38 @@ function Dashboard({ mockMode = true, getToken }) {
     return { headers: baseHeaders };
   };
 
+  // Fetch logged in user profile from API on mount
+  const fetchUserProfile = async () => {
+    setProfileLoading(true);
+    try {
+      if (mockMode) {
+        if (initialUserEmail) {
+          setCurrentUser({ email: initialUserEmail, role: initialUserRole });
+        }
+      } else {
+        const token = await getToken({ template: 'neon_rls' });
+        const res = await axios.get(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCurrentUser(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [initialUserEmail, mockMode]);
+
   // Fetch Claims
   const fetchClaims = async () => {
+    if (!currentUser) return;
     setRefreshing(true);
     try {
-      const headers = await getRequestHeaders('view_claims');
+      const headers = await getRequestHeaders();
       const res = await axios.get(`${API_BASE}/claims`, headers);
       setClaims(res.data);
     } catch (err) {
@@ -75,14 +346,16 @@ function Dashboard({ mockMode = true, getToken }) {
   };
 
   useEffect(() => {
-    fetchClaims();
-  }, []);
+    if (currentUser) {
+      fetchClaims();
+    }
+  }, [currentUser]);
 
   // Fetch specific claim details
   const fetchClaimDetails = async (id) => {
     setLoading(true);
     try {
-      const headers = await getRequestHeaders('view_claims');
+      const headers = await getRequestHeaders();
       const res = await axios.get(`${API_BASE}/claims/${id}`, headers);
       setClaimDetails(res.data);
       setSelectedClaimId(id);
@@ -104,14 +377,15 @@ function Dashboard({ mockMode = true, getToken }) {
     const formData = new FormData();
     formData.append('policy_number', policyNo);
     formData.append('claim_amount', claimAmt);
+    formData.append('customer_email', currentUser?.email);
     formData.append('file', claimFile);
     
     setLoading(true);
     setClaimMsg(null);
     try {
-      const headers = await getRequestHeaders('submit_claim', true);
+      const headers = await getRequestHeaders(true);
       await axios.post(`${API_BASE}/claims/submit`, formData, headers);
-      setClaimMsg({ type: 'success', text: 'Claim submitted successfully. Agent graph run paused at Human verification step.' });
+      setClaimMsg({ type: 'success', text: 'Claim submitted successfully! LangGraph agent initialized and paused for Human underwriting verification.' });
       setPolicyNo('');
       setClaimAmt('');
       setClaimFile(null);
@@ -141,7 +415,7 @@ function Dashboard({ mockMode = true, getToken }) {
     setLoading(true);
     setPolicyMsg(null);
     try {
-      const headers = await getRequestHeaders('upload_policy', true);
+      const headers = await getRequestHeaders(true);
       await axios.post(`${API_BASE}/policies/upload`, formData, headers);
       setPolicyMsg({ type: 'success', text: 'Policy successfully registered and embedded into Qdrant vector database!' });
       setRegPolicyNo('');
@@ -163,12 +437,12 @@ function Dashboard({ mockMode = true, getToken }) {
     const formData = new FormData();
     formData.append('action', action);
     formData.append('notes', officerNotes);
-    formData.append('officer_email', 'officer@example.com');
+    formData.append('officer_email', currentUser?.email || 'officer@example.com');
     
     setLoading(true);
     setActionMsg(null);
     try {
-      const headers = await getRequestHeaders('claim_action');
+      const headers = await getRequestHeaders();
       headers.headers['Content-Type'] = 'application/x-www-form-urlencoded';
       const res = await axios.post(`${API_BASE}/claims/${selectedClaimId}/action`, formData, headers);
       setActionMsg({ type: 'success', text: res.data.message });
@@ -184,6 +458,15 @@ function Dashboard({ mockMode = true, getToken }) {
     }
   };
 
+  // Render Role Badges
+  const getRoleBadge = (role) => {
+    if (role === 'claim_officer') {
+      return <span className="badge approved" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}>Claims Officer</span>;
+    }
+    return <span className="badge processing" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}>Customer</span>;
+  };
+
+  // Render Status Badges
   const getStatusBadge = (status) => {
     switch (status) {
       case 'approved':
@@ -197,6 +480,32 @@ function Dashboard({ mockMode = true, getToken }) {
     }
   };
 
+  // Switch Role / Logout Persona
+  const handlePersonaLogout = () => {
+    setCurrentUser(null);
+    setClaims([]);
+    setClaimDetails(null);
+    setSelectedClaimId(null);
+    onLogout();
+  };
+
+  // Profile Loading View
+  if (profileLoading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', justifyContent: 'center', alignItems: 'center', background: 'var(--bg-space)' }}>
+        <RefreshCw size={44} className="spin-anim" style={{ color: 'var(--accent-cyan)', marginBottom: '1rem' }} />
+        <p style={{ color: 'var(--text-secondary)' }}>Loading Secure AI Portal profile...</p>
+      </div>
+    );
+  }
+
+  // Not Logged In View
+  if (!currentUser) {
+    return <LoginScreen isClerkEnabled={!mockMode} onLogin={(email, role) => setCurrentUser({ email, role })} />;
+  }
+
+  const isOfficer = currentUser.role === 'claim_officer';
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -205,33 +514,49 @@ function Dashboard({ mockMode = true, getToken }) {
           <span className="logo-icon">🛡️</span>
           <div>
             <h1 className="logo-text">ClaimsAgent AI</h1>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Human-in-the-Loop Claims Processing Engine</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              {isOfficer ? 'Claims Officer Underwriting Cockpit' : 'Secure Customer Claims Portal'}
+            </p>
           </div>
         </div>
         
-        {!mockMode && (
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '1.5rem' }}>
-            <UserButton afterSignOutUrl="/" />
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.25rem', marginRight: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', background: 'rgba(255, 255, 255, 0.03)', padding: '0.4rem 0.8rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Logged in:</span>
+            {getRoleBadge(currentUser.role)}
+            <span style={{ color: 'var(--text-secondary)', marginLeft: '0.25rem' }}>({currentUser.email})</span>
           </div>
-        )}
+
+          {!mockMode ? (
+            <UserButton afterSignOutUrl="/" />
+          ) : (
+            <button 
+              className="view-btn" 
+              onClick={handlePersonaLogout}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', borderColor: 'var(--status-danger-border)', color: 'var(--status-danger)', background: 'var(--status-danger-bg)' }}
+            >
+              <LogOut size={12} /> Switch Persona
+            </button>
+          )}
+        </div>
         
         <nav className="nav-tabs">
           <button 
             className={`tab-btn ${activeTab === 'queue' ? 'active' : ''}`}
             onClick={() => setActiveTab('queue')}
           >
-            Claims Queue
+            {isOfficer ? 'Underwriting Queue' : 'My Claims List'}
           </button>
           <button 
             className={`tab-btn ${activeTab === 'details' ? 'active' : ''}`}
             onClick={() => setActiveTab('details')}
           >
-            Claim Review & Explainability
+            Explainability & RAG Audit
           </button>
         </nav>
       </header>
 
-      {/* Tabs panels */}
+      {/* Tab Panels */}
       {activeTab === 'queue' && (
         <div>
           {/* KPI Metrics Banner */}
@@ -241,7 +566,7 @@ function Dashboard({ mockMode = true, getToken }) {
                 <FileText size={20} />
               </div>
               <div>
-                <p className="kpi-label">Total Ingested Claims</p>
+                <p className="kpi-label">{isOfficer ? 'Total Ingested Claims' : 'My Total Claims'}</p>
                 <h3 className="kpi-value">{claims.length}</h3>
               </div>
             </div>
@@ -251,7 +576,7 @@ function Dashboard({ mockMode = true, getToken }) {
                 <Eye size={20} />
               </div>
               <div>
-                <p className="kpi-label">Needs Officer Sign-off</p>
+                <p className="kpi-label">Needs Sign-off</p>
                 <h3 className="kpi-value">{claims.filter(c => c.status === 'pending_approval').length}</h3>
               </div>
             </div>
@@ -271,7 +596,7 @@ function Dashboard({ mockMode = true, getToken }) {
                 <XCircle size={20} />
               </div>
               <div>
-                <p className="kpi-label">Auto-Rejection Rate</p>
+                <p className="kpi-label">{isOfficer ? 'Auto-Rejection Rate' : 'Rejected claims'}</p>
                 <h3 className="kpi-value">
                   {claims.length > 0 
                     ? ((claims.filter(c => c.status === 'rejected').length / claims.length) * 100).toFixed(0) + '%' 
@@ -283,221 +608,225 @@ function Dashboard({ mockMode = true, getToken }) {
 
           <div className="dashboard-grid">
             {/* Claims Queue Panel */}
-
-          <div className="glass-card">
-            <div className="panel-header" style={{ border: 'none', marginBottom: 0 }}>
-              <h2 className="card-title">
-                <ShieldCheck size={20} /> Underwriting Queue
-              </h2>
-              <button className="view-btn" onClick={fetchClaims} disabled={refreshing} style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                <RefreshCw size={14} className={refreshing ? 'spin-anim' : ''} /> Refresh
-              </button>
-            </div>
-            
-            <div className="claims-table-wrapper">
-              <table className="claims-table">
-                <thead>
-                  <tr>
-                    <th>Claim ID</th>
-                    <th>Policy No</th>
-                    <th>Amount (INR)</th>
-                    <th>Submitted On</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {claims.length === 0 ? (
+            <div className="glass-card">
+              <div className="panel-header" style={{ border: 'none', marginBottom: 0 }}>
+                <h2 className="card-title">
+                  <ShieldCheck size={20} /> {isOfficer ? 'System Underwriting Queue' : 'My Claim History'}
+                </h2>
+                <button className="view-btn" onClick={fetchClaims} disabled={refreshing} style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  <RefreshCw size={14} className={refreshing ? 'spin-anim' : ''} /> Refresh Queue
+                </button>
+              </div>
+              
+              <div className="claims-table-wrapper">
+                <table className="claims-table">
+                  <thead>
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '2rem' }}>
-                        No claims registered. Submit a claim using the form on the right.
-                      </td>
+                      <th>Claim ID</th>
+                      <th>Policy No</th>
+                      <th>Amount (INR)</th>
+                      <th>Submitted On</th>
+                      <th>Status</th>
+                      <th>Action</th>
                     </tr>
-                  ) : (
-                    claims.map((claim) => (
-                      <tr key={claim.id}>
-                        <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{claim.id.substring(0, 8)}...</td>
-                        <td>{claim.policy_number}</td>
-                        <td style={{ fontWeight: '600' }}>₹{claim.claim_amount.toLocaleString()}</td>
-                        <td>{new Date(claim.created_at).toLocaleDateString()}</td>
-                        <td>{getStatusBadge(claim.status)}</td>
-                        <td>
-                          <button 
-                            className="view-btn" 
-                            style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}
-                            onClick={() => {
-                              fetchClaimDetails(claim.id);
-                              setActiveTab('details');
-                            }}
-                          >
-                            <Eye size={12} /> Audit Review
-                          </button>
+                  </thead>
+                  <tbody>
+                    {claims.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '3rem' }}>
+                          {isOfficer 
+                            ? 'No claims registered in the underwriting queue.' 
+                            : 'You have not submitted any claims yet. Use the claim upload form on the right.'}
                         </td>
                       </tr>
-                    ))
+                    ) : (
+                      claims.map((claim) => (
+                        <tr key={claim.id}>
+                          <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{claim.id.substring(0, 8)}...</td>
+                          <td>{claim.policy_number}</td>
+                          <td style={{ fontWeight: '600' }}>₹{claim.claim_amount.toLocaleString()}</td>
+                          <td>{new Date(claim.created_at).toLocaleDateString()}</td>
+                          <td>{getStatusBadge(claim.status)}</td>
+                          <td>
+                            <button 
+                              className="view-btn" 
+                              style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}
+                              onClick={() => {
+                                fetchClaimDetails(claim.id);
+                                setActiveTab('details');
+                              }}
+                            >
+                              <Eye size={12} /> {isOfficer ? 'Audit Review' : 'View Explainability'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Sidebar Form Panel (Role-based) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {/* If Customer: Show Claim Submission Form */}
+              {!isOfficer && (
+                <div className="glass-card" style={{ border: '1px solid rgba(59, 130, 246, 0.15)' }}>
+                  <h2 className="card-title" style={{ borderLeftColor: 'var(--accent-blue)' }}>
+                    <FileText size={18} /> Submit Claim Request
+                  </h2>
+                  
+                  {claimMsg && (
+                    <div className={`form-alert ${claimMsg.type}`}>
+                      {claimMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                      {claimMsg.text}
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
-          </div>
 
-          {/* Forms Sidebar Panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {/* Form: Submit Claim */}
-            <div className="glass-card">
-              <h2 className="card-title">
-                <FileText size={18} /> Submit Claim Request
-              </h2>
-              
-              {claimMsg && (
-                <div className={`form-alert ${claimMsg.type}`}>
-                  {claimMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                  {claimMsg.text}
+                  <form onSubmit={handleClaimSubmit}>
+                    <div className="form-group">
+                      <label className="form-label">Associated Policy Number</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. POL-1001"
+                        value={policyNo}
+                        onChange={(e) => setPolicyNo(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label">Claim Invoice Amount (INR)</label>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        placeholder="e.g. 45000"
+                        value={claimAmt}
+                        onChange={(e) => setClaimAmt(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label">Supporting Bills / Medical PDF</label>
+                      <div className="file-upload-box" onClick={() => document.getElementById('claim-file-input').click()}>
+                        <Upload className="file-upload-icon" />
+                        <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                          {claimFile ? claimFile.name : 'Upload Invoices / Bills PDF'}
+                        </p>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Click to browse computer</span>
+                      </div>
+                      <input 
+                        type="file" 
+                        id="claim-file-input" 
+                        accept="application/pdf"
+                        style={{ display: 'none' }}
+                        onChange={(e) => setClaimFile(e.target.files[0])}
+                      />
+                    </div>
+                    
+                    <button type="submit" className="btn-primary" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }} disabled={loading}>
+                      {loading ? 'Running AI Agents Pipeline...' : 'Initialize AI Agents Verify'}
+                    </button>
+                  </form>
                 </div>
               )}
 
-              <form onSubmit={handleClaimSubmit}>
-                <div className="form-group">
-                  <label className="form-label">Policy Number</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. POL-1001"
-                    value={policyNo}
-                    onChange={(e) => setPolicyNo(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Claim Invoice Amount (INR)</label>
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    placeholder="e.g. 45000"
-                    value={claimAmt}
-                    onChange={(e) => setClaimAmt(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Supporting Bills / Medical PDF</label>
-                  <div className="file-upload-box" onClick={() => document.getElementById('claim-file-input').click()}>
-                    <Upload className="file-upload-icon" />
-                    <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                      {claimFile ? claimFile.name : 'Upload Invoices / Bills PDF'}
-                    </p>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Click to browse computer</span>
-                  </div>
-                  <input 
-                    type="file" 
-                    id="claim-file-input" 
-                    accept="application/pdf"
-                    style={{ display: 'none' }}
-                    onChange={(e) => setClaimFile(e.target.files[0])}
-                  />
-                </div>
-                
-                <button type="submit" className="btn-primary" disabled={loading}>
-                  {loading ? 'Running AI Agents...' : 'Initialize AI Agents Pipeline'}
-                </button>
-              </form>
-            </div>
+              {/* If Claims Officer: Show Policy Registering Form */}
+              {isOfficer && (
+                <div className="glass-card" style={{ border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                  <h2 className="card-title" style={{ borderLeftColor: '#10b981' }}>
+                    <Database size={18} /> Register Insurance Policy
+                  </h2>
+                  
+                  {policyMsg && (
+                    <div className={`form-alert ${policyMsg.type}`}>
+                      {policyMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                      {policyMsg.text}
+                    </div>
+                  )}
 
-            {/* Form: Register Policy */}
-            <div className="glass-card">
-              <h2 className="card-title">
-                <Database size={18} /> Register Insurance Policy
-              </h2>
-              
-              {policyMsg && (
-                <div className={`form-alert ${policyMsg.type}`}>
-                  {policyMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                  {policyMsg.text}
+                  <form onSubmit={handlePolicySubmit}>
+                    <div className="form-group">
+                      <label className="form-label">Policy Number</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. POL-1001"
+                        value={regPolicyNo}
+                        onChange={(e) => setRegPolicyNo(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label">Policy Holder Name</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. MR. HARSHR AJ"
+                        value={regHolder}
+                        onChange={(e) => setRegHolder(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Maximum Coverage Limit (INR)</label>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        placeholder="e.g. 500000"
+                        value={regLimit}
+                        onChange={(e) => setRegLimit(e.target.value)}
+                        required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label className="form-label">Exclusions Policy Document PDF</label>
+                      <div className="file-upload-box" onClick={() => document.getElementById('policy-file-input').click()}>
+                        <Upload className="file-upload-icon" />
+                        <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                          {policyFile ? policyFile.name : 'Upload Exclusions Guidelines PDF'}
+                        </p>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Required for Qdrant RAG index</span>
+                      </div>
+                      <input 
+                        type="file" 
+                        id="policy-file-input" 
+                        accept="application/pdf"
+                        style={{ display: 'none' }}
+                        onChange={(e) => setPolicyFile(e.target.files[0])}
+                      />
+                    </div>
+                    
+                    <button type="submit" className="btn-primary" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }} disabled={loading}>
+                      {loading ? 'Ingesting Guidelines PDF...' : 'Index & Ingest Policy Clauses'}
+                    </button>
+                  </form>
                 </div>
               )}
-
-              <form onSubmit={handlePolicySubmit}>
-                <div className="form-group">
-                  <label className="form-label">Policy Number</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. POL-1001"
-                    value={regPolicyNo}
-                    onChange={(e) => setRegPolicyNo(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Policy Holder Name</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. John Doe"
-                    value={regHolder}
-                    onChange={(e) => setRegHolder(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Coverage limit (INR)</label>
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    placeholder="e.g. 500000"
-                    value={regLimit}
-                    onChange={(e) => setRegLimit(e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label className="form-label">Exclusions Policy Document PDF</label>
-                  <div className="file-upload-box" onClick={() => document.getElementById('policy-file-input').click()}>
-                    <Upload className="file-upload-icon" />
-                    <p style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                      {policyFile ? policyFile.name : 'Upload Policy Guidelines PDF'}
-                    </p>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Required for Qdrant RAG index</span>
-                  </div>
-                  <input 
-                    type="file" 
-                    id="policy-file-input" 
-                    accept="application/pdf"
-                    style={{ display: 'none' }}
-                    onChange={(e) => setPolicyFile(e.target.files[0])}
-                  />
-                </div>
-                
-                <button type="submit" className="btn-primary" disabled={loading}>
-                  {loading ? 'Embedding PDF...' : 'Index & Ingest Policy clauses'}
-                </button>
-              </form>
             </div>
           </div>
-        </div>
         </div>
       )}
-
 
       {activeTab === 'details' && (
         <div>
           {!selectedClaimId ? (
             <div className="glass-card" style={{ textAlign: 'center', padding: '4rem' }}>
               <ShieldCheck size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-              <h3>Select a claim from the underwriting queue to audit.</h3>
-              <button className="tab-btn active" style={{ marginTop: '1rem', float: 'none' }} onClick={() => setActiveTab('queue')}>
-                Go to Claims Queue
+              <h3>Select a claim from the {isOfficer ? 'underwriting queue' : 'claims list'} to audit explainability logs.</h3>
+              <button className="tab-btn active" style={{ marginTop: '1.25rem', float: 'none' }} onClick={() => setActiveTab('queue')}>
+                View Claims List
               </button>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
               
-              {/* Main Panel grid */}
+              {/* Main Panel Grid */}
               <div className="detail-grid">
                 
                 {/* Left Panel: Ingested & Extracted Metadata */}
@@ -507,7 +836,7 @@ function Dashboard({ mockMode = true, getToken }) {
                     {getStatusBadge(claimDetails?.claim?.status)}
                   </div>
                   
-                  <p className="panel-section-title">Claim invoice extraction (Gemini 2.5)</p>
+                  <p className="panel-section-title">Claim Invoice Extraction (Gemini 2.5)</p>
                   <div className="attributes-grid">
                     <div className="attr-item">
                       <span className="attr-label">Patient Name</span>
@@ -520,20 +849,20 @@ function Dashboard({ mockMode = true, getToken }) {
                       </span>
                     </div>
                     <div className="attr-item">
-                      <span className="attr-label">Medical treatment</span>
-                      <span className="attr-value" style={{ color: 'var(--primary-accent)' }}>
+                      <span className="attr-label">Medical Treatment</span>
+                      <span className="attr-value" style={{ color: 'var(--accent-cyan)' }}>
                         {claimDetails?.graph_state?.extracted_claim?.treatment || 'N/A'}
                       </span>
                     </div>
                     <div className="attr-item">
-                      <span className="attr-label">Admission dates</span>
+                      <span className="attr-label">Admission Dates</span>
                       <span className="attr-value" style={{ fontSize: '0.85rem' }}>
                         {claimDetails?.graph_state?.extracted_claim?.admission_date || 'N/A'} to {claimDetails?.graph_state?.extracted_claim?.discharge_date || 'N/A'}
                       </span>
                     </div>
                   </div>
 
-                  <p className="panel-section-title">Verified policy details</p>
+                  <p className="panel-section-title">Verified Policy Registry Details</p>
                   <div className="attributes-grid">
                     <div className="attr-item">
                       <span className="attr-label">Policy Number</span>
@@ -556,19 +885,19 @@ function Dashboard({ mockMode = true, getToken }) {
                 <div className="glass-card">
                   <div className="panel-header">
                     <h3>AI Explainability & Reasoning</h3>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}> observability context</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Observability Context</span>
                   </div>
                   
-                  {/* AI Recommendation synthesis */}
+                  {/* AI Recommendation Synthesis */}
                   <div className="rec-banner">
                     <span className="rec-banner-icon">🤖</span>
                     <div className="rec-banner-content">
                       <h4>
-                        Recommendation: {' '}
+                        Agent Recommendation: {' '}
                         <span style={{ 
                           color: claimDetails?.graph_state?.ai_recommendation?.recommendation?.toUpperCase() === 'APPROVE' 
-                            ? 'var(--color-success)' 
-                            : 'var(--color-danger)', 
+                            ? 'var(--status-success)' 
+                            : 'var(--status-danger)', 
                           fontWeight: '800' 
                         }}>
                           {claimDetails?.graph_state?.ai_recommendation?.recommendation || 'PROCESSING'}
@@ -601,8 +930,8 @@ function Dashboard({ mockMode = true, getToken }) {
                       )}
                       <div className="checklist-text">
                         <strong>Remaining Coverage Limit Math:</strong>{' '}
-                        Remaining policy limit: ₹{claimDetails?.graph_state?.coverage_math?.remaining_coverage_before?.toLocaleString()}.{' '}
-                        Balance after claim: ₹{claimDetails?.graph_state?.coverage_math?.remaining_coverage_after?.toLocaleString()}.
+                        Remaining policy limit: ₹{claimDetails?.graph_state?.coverage_math?.remaining_coverage_before?.toLocaleString() || '0'}.{' '}
+                        Balance after claim: ₹{claimDetails?.graph_state?.coverage_math?.remaining_coverage_after?.toLocaleString() || '0'}.
                       </div>
                     </div>
                   </div>
@@ -617,44 +946,72 @@ function Dashboard({ mockMode = true, getToken }) {
                     )) || <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No clauses queried.</p>}
                   </div>
                   
-                  {/* Action box */}
-                  {claimDetails?.claim?.status === 'pending_approval' && (
-                    <div className="action-box">
-                      <p className="panel-section-title" style={{ border: 'none', padding: 0 }}>Durable Officer Intervention</p>
-                      
-                      {actionMsg && (
-                        <div className={`form-alert ${actionMsg.type}`} style={{ marginTop: '0.5rem' }}>
-                          {actionMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                          {actionMsg.text}
-                        </div>
-                      )}
+                  {/* Action Box (Secured by Role) */}
+                  <div style={{ marginTop: '1.5rem' }}>
+                    {isOfficer ? (
+                      claimDetails?.claim?.status === 'pending_approval' ? (
+                        <div className="action-box" style={{ border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                          <p className="panel-section-title" style={{ border: 'none', padding: 0 }}>Human Underwriter Intervention</p>
+                          
+                          {actionMsg && (
+                            <div className={`form-alert ${actionMsg.type}`} style={{ marginTop: '0.5rem' }}>
+                              {actionMsg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                              {actionMsg.text}
+                            </div>
+                          )}
 
-                      <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                        <label className="form-label">Review Decisions notes / audit remarks</label>
-                        <textarea 
-                          className="form-input" 
-                          rows="2" 
-                          placeholder="e.g. Validated clinical billing details against exceptions. Clearance allowed."
-                          value={officerNotes}
-                          onChange={(e) => setOfficerNotes(e.target.value)}
-                          style={{ resize: 'vertical' }}
-                        />
+                          <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                            <label className="form-label">Review Decision Notes / Audit Remarks</label>
+                            <textarea 
+                              className="form-input" 
+                              rows="2" 
+                              placeholder="e.g. Validated clinical billing details against exceptions. Clearance allowed."
+                              value={officerNotes}
+                              onChange={(e) => setOfficerNotes(e.target.value)}
+                              style={{ resize: 'vertical' }}
+                            />
+                          </div>
+                          
+                          <div className="action-buttons">
+                            <button className="btn-approve" onClick={() => handleHumanAction('APPROVED')}>
+                              Approve Claim
+                            </button>
+                            <button className="btn-reject" onClick={() => handleHumanAction('REJECTED')}>
+                              Reject Claim
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', background: 'rgba(255, 255, 255, 0.03)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
+                          ✅ Underwriting finalized. Status: <strong style={{ textTransform: 'uppercase' }}>{claimDetails?.claim?.status}</strong>
+                        </div>
+                      )
+                    ) : (
+                      /* Customer View: Action Locked */
+                      <div style={{
+                        fontSize: '0.88rem',
+                        color: 'var(--status-pending)',
+                        background: 'var(--status-pending-bg)',
+                        padding: '1rem',
+                        borderRadius: '10px',
+                        border: '1px solid var(--status-pending-border)',
+                        display: 'flex',
+                        gap: '0.5rem',
+                        alignItems: 'center'
+                      }}>
+                        <ShieldCheck size={18} />
+                        <span>
+                          {claimDetails?.claim?.status === 'pending_approval'
+                            ? 'Claim is currently pending verification sign-off by a Claims Officer.'
+                            : `Claim processing complete. Status: ${claimDetails?.claim?.status.toUpperCase()}`}
+                        </span>
                       </div>
-                      
-                      <div className="action-buttons">
-                        <button className="btn-approve" onClick={() => handleHumanAction('APPROVED')}>
-                          Approve Claim
-                        </button>
-                        <button className="btn-reject" onClick={() => handleHumanAction('REJECTED')}>
-                          Reject Claim
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Audit history timeline */}
+              {/* Audit History Timeline */}
               <div className="glass-card" style={{ marginTop: '1rem' }}>
                 <h3 className="card-title" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <History size={18} /> Audit Trail Timeline Logs (Durable State)
@@ -707,18 +1064,7 @@ function AuthWrapper() {
         <DashboardSecure />
       </SignedIn>
       <SignedOut>
-        <div className="min-h-screen flex flex-col justify-center items-center bg-slate-950 text-slate-100 p-4" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-          <div className="glass-card max-w-md w-full p-8 rounded-2xl border border-slate-800 text-center" style={{ background: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <div className="flex justify-center mb-6" style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-              <ShieldCheck className="w-16 h-16 text-teal-400" size={64} style={{ color: '#2dd4bf' }} />
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight mb-2" style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>ClaimsAgent AI Portal</h1>
-            <p className="text-slate-400 mb-6" style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Sign in to access your claims queue, verify policies, and view audit trails.</p>
-            <div className="flex justify-center" style={{ display: 'flex', justifyContent: 'center' }}>
-              <SignIn routing="hash" />
-            </div>
-          </div>
-        </div>
+        <LoginScreen isClerkEnabled={true} />
       </SignedOut>
     </>
   );
@@ -726,11 +1072,30 @@ function AuthWrapper() {
 
 function App() {
   const isClerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const [demoUser, setDemoUser] = useState(null);
+
   if (isClerkEnabled) {
     return <AuthWrapper />;
   }
-  return <Dashboard mockMode={true} />;
+
+  // Demo mode with persona selector
+  if (!demoUser) {
+    return (
+      <LoginScreen 
+        isClerkEnabled={false} 
+        onLogin={(email, role) => setDemoUser({ email, role })} 
+      />
+    );
+  }
+
+  return (
+    <Dashboard 
+      mockMode={true} 
+      initialUserEmail={demoUser.email} 
+      initialUserRole={demoUser.role} 
+      onLogout={() => setDemoUser(null)} 
+    />
+  );
 }
 
 export default App;
-

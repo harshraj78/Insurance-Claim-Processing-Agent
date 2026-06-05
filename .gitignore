@@ -37,6 +37,7 @@ Thumbs.db
 .env
 .env.*
 backend/.env
+frontend/.env
 backend/.env.*
 
 # SQLite journal files
