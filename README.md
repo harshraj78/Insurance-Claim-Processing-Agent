@@ -53,12 +53,14 @@ graph TD
 ## 📸 Interface Preview
 
 ### 1. Claims Operations Dashboard
+*A glassmorphic dashboard showcasing top-level KPI metrics, real-time claim queues, and quick filters.*
 
-![Claims Operations Dashboard](<img width="1889" height="837" alt="image" src="https://github.com/user-attachments/assets/674a325b-5bdb-4f0f-8a2b-ace385051810" />)
+<img width="1889" height="837" alt="Claims Operations Dashboard" src="https://github.com/user-attachments/assets/674a325b-5bdb-4f0f-8a2b-ace385051810" />
 
 ### 2. Human-in-the-Loop Verification Drawer
+*The evaluation panel demonstrating the RAG-retrieved policy rules, math verification checklist, and the action-form to approve or reject the claim.*
 
-![Human Verification Panel](<img width="1795" height="858" alt="image" src="https://github.com/user-attachments/assets/e82936a3-c6f5-40a5-87ea-70cc8f6ca915" />)
+<img width="1795" height="858" alt="Human Verification Panel" src="https://github.com/user-attachments/assets/e82936a3-c6f5-40a5-87ea-70cc8f6ca915" />
 
 ---
 
