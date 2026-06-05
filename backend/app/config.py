@@ -23,6 +23,20 @@ class Settings(BaseSettings):
         default="gemini-2.5-flash",
         validation_alias="MODEL_NAME"
     )
+    
+    # LangSmith Observability Tracing
+    LANGCHAIN_TRACING_V2: str = Field(
+        default="false",
+        validation_alias="LANGCHAIN_TRACING_V2"
+    )
+    LANGCHAIN_API_KEY: str = Field(
+        default="",
+        validation_alias="LANGCHAIN_API_KEY"
+    )
+    LANGCHAIN_PROJECT: str = Field(
+        default="insurance-claims-processing",
+        validation_alias="LANGCHAIN_PROJECT"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -31,3 +45,9 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Automatically export LangChain settings to os.environ so the SDK automatically initializes tracing
+if settings.LANGCHAIN_TRACING_V2.lower() == "true" and settings.LANGCHAIN_API_KEY:
+    os.environ["LANGCHAIN_TRACING_V2"] = "true"
+    os.environ["LANGCHAIN_API_KEY"] = settings.LANGCHAIN_API_KEY
+    os.environ["LANGCHAIN_PROJECT"] = settings.LANGCHAIN_PROJECT

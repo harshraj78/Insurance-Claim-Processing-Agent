@@ -32,6 +32,16 @@ qdrant_storage/
 .DS_Store
 Thumbs.db
 *.log
+
+# Environment files
 .env
+.env.*
 backend/.env
+backend/.env.*
+
+# SQLite journal files
+*.db-journal
+*.db-shm
+*.db-wal
+
 

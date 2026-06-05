@@ -11,6 +11,7 @@ from app.db.models import User, Policy, Claim, AuditLog
 from app.db.seed import seed_database
 from app.vector_db.qdrant_service import init_qdrant_collection, upsert_policy_clauses
 from app.workflow.graph import compiled_graph
+from app.db.auth import get_current_user, RoleChecker
 
 
 app = FastAPI(
@@ -61,7 +62,8 @@ def upload_policy(
     policy_holder: str = Form(...),
     coverage_limit: float = Form(...),
     file: UploadFile = File(...),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(RoleChecker(["claim_officer"]))
 ):
     """
     Saves policy metadata in DB, parses policy document, 
@@ -138,7 +140,8 @@ def submit_claim(
     claim_amount: float = Form(...),
     customer_email: str = Form("customer@example.com"),
     file: UploadFile = File(...),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(RoleChecker(["customer"]))
 ):
     """
     Submits a claim request, saves files, inserts DB claim, 
@@ -275,7 +278,8 @@ def claim_human_action(
     action: str = Form(...), # "APPROVED" or "REJECTED"
     notes: str = Form(""),
     officer_email: str = Form("officer@example.com"),
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(RoleChecker(["claim_officer"]))
 ):
     """
     Resolves the human verification interrupt, updates the Postgres 
