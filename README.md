@@ -1,107 +1,148 @@
 # Insurance Claim Processing Agent (HITL Multi-Agent System)
 
-This repository implements an AI-powered, human-in-the-loop (HITL) insurance claims validation platform using **LangGraph**, **Qdrant Vector DB**, **FastAPI**, **PostgreSQL**, and **Google Gemini 2.5 Flash**.
+An enterprise-grade, human-in-the-loop (HITL) insurance claims validation and processing platform. This system utilizes a multi-agent workflow to ingest claim invoices, perform policy clause lookups via RAG, calculate eligibility limits, compile mathematical balances, and pause execution for human officer review.
+
+Built using **LangGraph**, **FastAPI**, **React (Vite)**, **Qdrant Vector DB**, and **PostgreSQL/SQLite**.
 
 ---
 
-## 🌟 Resume & Interview Positioning
+## 🏗️ System Architecture
 
-### Elevator Pitch
-> "I built an enterprise-grade AI claims assistant using LangGraph, RAG, and FastAPI. It parses medical invoices using Gemini 2.5 Flash, queries policy rules in Qdrant with specific policy payload isolation, computes mathematical balances via decoupled tool-driven graph nodes, and uses LangGraph's durable checkpointers to pause execution for human verification. The system details explainable reasoning paths and retrieved clauses in a claims officer dashboard before final action is taken."
+The platform consists of a modern decoupled architecture:
+1. **Frontend (React)**: A glassmorphic dashboard built with Tailwind CSS/Vanilla CSS, featuring real-time claims queues, interactive audit review drawers, and detailed explainability panels.
+2. **Backend API (FastAPI)**: REST endpoints managing claims lifecycles, user authentication, file uploads, and LangGraph workflow instances.
+3. **Orchestration (LangGraph)**: A stateful, multi-node agent network with checkpoint-based state persistence to handle durable execution pauses.
+4. **Vector Search (Qdrant)**: Stores and searches through policy documents using metadata filters to retrieve relevant clauses (waiting periods, exclusions).
+5. **Relational Database (PostgreSQL/SQLite)**: Manages relational data for users, policies, claims history, and granular audit trails.
 
-### Key Bullet Points
-*   **Architected a modular tool-driven claims engine** using **LangGraph** and **Gemini 2.5 Flash**, separating ingestion, RAG lookup, history queries, and calculators into discrete, single-responsibility graph nodes to update a unified state.
-*   **Implemented a precision RAG retrieval system** with **Qdrant**, isolating search spaces using policy ID metadata filters to extract waiting period and exclusion rules.
-*   **Created a durable Human-in-the-Loop approval architecture** using LangGraph state interrupts and PostgreSQL checkpointers, allowing long-running agent state pipelines to pause and resume asynchronously via FastAPI REST endpoints.
-*   **Designed an AI Explainability Dashboard** in React that lists verified eligibility checklists and links retrieved policy clauses directly to AI recommendations, providing clear audit trails.
+### Component Diagram
 
----
+```mermaid
+graph TD
+    User([Claims Officer]) <-->|Interacts with UI| Frontend[React Single Page App]
+    Frontend <-->|REST API / JSON| Backend[FastAPI Backend Gateway]
+    Backend <-->|Durable Workflows| LangGraph[LangGraph Engine]
+    LangGraph <-->|State Checkpoints| PostgreSQL[(PostgreSQL / SQLite)]
+    LangGraph <-->|RAG Query| Qdrant[(Qdrant Vector Database)]
+    LangGraph <-->|LLM Verification| Gemini[Google Gemini 2.5 Flash]
+```
 
-## 🏗️ Graph Orchestration Flow
+### Agent Workflow Diagram
 
-Rather than using a single monolithic agent, the pipeline is split into modular tool-driven nodes executing sequentially:
+The LangGraph workflow runs sequentially across specialized, single-responsibility nodes. It pauses at the **Human Review Barrier** to await officer feedback, resuming state seamlessly:
 
-```text
-Document Ingestion & Extraction (Gemini 2.5 Flash parser)
-             ↓
-Policy Lookup RAG Node (Qdrant semantic search filtered by policy_id)
-             ↓
-Claim History Node (Query customer claims records in PostgreSQL)
-             ↓
-Coverage Calculator Node (Mathematical remaining balance boundaries)
-             ↓
-Eligibility Decision Node (Consolidate exclusions and waiting periods checks)
-             ↓
-Recommendation Node (AI synthesis of APPROVE / REJECT recommendation)
-             ↓
-[DURABLE STATE INTERRUPT BARRIER] (LangGraph state checkpointer pause)
-             ↓
-Human Claims Officer approval Action (UI action input resumes graph)
-             ↓
-Final PostgreSQL status commit and Audit Trail logging
+```mermaid
+graph TD
+    Start([Claim Submitted]) --> Ingestion[1. Ingestion & Extraction Node]
+    Ingestion --> PolicyRAG[2. Policy Clause RAG Node]
+    PolicyRAG --> ClaimHistory[3. Claim History Query Node]
+    ClaimHistory --> BalanceCalc[4. Coverage Balance Calculator Node]
+    BalanceCalc --> Verdict[5. Eligibility Verdict Node]
+    Verdict --> Recommender[6. AI Recommender Node]
+    Recommender --> Pause{State Interrupt Barrier}
+    
+    %% Human Action Flow
+    Pause -->|Pauses & Persists State| Webhook[Awaiting Human Officer Action]
+    Webhook -->|Resume with Approval/Rejection| Resume[7. Decision Update Node]
+    Resume --> AuditCommit[8. Commit & Audit Log Node]
+    AuditCommit --> End([Claim Processed])
 ```
 
 ---
 
-## 🚀 Quick Start (Docker Orchestration)
+## 📸 Interface Preview
 
-Make sure you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed on your machine.
+### 1. Claims Operations Dashboard
+*A glassmorphic dashboard showcasing top-level KPI metrics, real-time claim queues, and quick filters.*
 
-1.  **Configure environment variables**:
-    Create a `.env` file in the root directory (or edit `backend/.env`):
-    ```env
-    GEMINI_API_KEY=your_gemini_api_key_here
-    ```
-    *Note: If no API key is provided, the system falls back to a deterministic hashing mock vector generator and regex invoice parser so you can still run, test, and demo the entire pipeline offline.*
+![Claims Operations Dashboard](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop) *(Replace with actual screenshot when running locally)*
 
-2.  **Start the containers**:
-    ```bash
-    docker-compose up --build
-    ```
+### 2. Human-in-the-Loop Verification Drawer
+*The evaluation panel demonstrating the RAG-retrieved policy rules, math verification checklist, and the action-form to approve or reject the claim.*
 
-3.  **Access the services**:
-    *   **Frontend Dashboard**: `http://localhost:3000`
-    *   **FastAPI API Swagger Docs**: `http://localhost:8000/docs`
-    *   **Qdrant Vector Database Dashboard**: `http://localhost:6333/dashboard`
+![Human Verification Panel](https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop) *(Replace with actual screenshot when running locally)*
 
 ---
 
-## 🧪 Running Automated Unit Tests
+## 🗄️ Database Schema
 
-You can run automated tests using `pytest`. Tests bypass PostgreSQL/Qdrant servers using in-memory SQLite overrides and mock RAG vectors, ensuring 100% build validity offline.
+The system uses **SQLModel** (SQLAlchemy + Pydantic) to model relational data:
 
-1.  Create and activate a python environment:
-    ```bash
-    cd backend
-    python -m venv venv
-    .\venv\Scripts\activate
-    ```
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  Run unit tests:
-    ```bash
-    pytest
-    ```
+- **`User`**: Account info, password hashes, and user roles (`customer`, `officer`).
+- **`Policy`**: Holds policy definitions, coverages, limits, and document links.
+- **`Claim`**: Tracks claim details, invoice data, extracted values, AI verdicts, and current status (`Pending`, `Awaiting_Review`, `Approved`, `Rejected`).
+- **`AuditLog`**: Logs chronological state transitions, execution actions, and officer notes for compliance.
 
 ---
 
-## 📑 Manual Verification Workflow
+## 🚀 Quick Start (Local Setup)
 
-1.  **Seeded Data**:
-    On startup, the PostgreSQL database is automatically seeded with a test customer (`customer@example.com`), a claims officer (`officer@example.com`), and two mock active policies:
-    *   `POL-1001` (Limit: ₹500,000)
-    *   `POL-1002` (Limit: ₹250,000)
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- (Optional) Docker
 
-2.  **Upload Invoice & Bill (Vite Dashboard)**:
-    *   Navigate to `http://localhost:3000`.
-    *   Select **Submit Claim Request**.
-    *   Enter Policy Number `POL-1001`, claim amount `45000` and attach any PDF.
-    *   Click **Initialize AI Agents Pipeline**.
+### 1. Backend Setup
+Navigate to the `backend` folder, set up a virtual environment, and install dependencies:
+```bash
+cd backend
+python -m venv venv
+source venv/Scripts/activate # Windows: .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
-3.  **Perform Audit**:
-    *   Click **Audit Review** on the newly submitted claim in the queue.
-    *   Review the **Ingestion Attributes** and the **AI Explainability & Reasoning Panel** (RAG retrieved clauses, waiting periods checks, remaining balance limits math).
-    *   Add your verification notes in the review form and click **Approve Claim**.
-    *   Verify the status resolves to `Approved` in the dashboard queue.
+Create a `.env` file in the `backend/` directory:
+```env
+DATABASE_URL=sqlite:///./claims.db
+GEMINI_API_KEY=your_gemini_api_key
+QDRANT_URL=http://localhost:6333
+```
+> **Note**: If no `GEMINI_API_KEY` is provided, the backend automatically engages deterministic regex parsers and mock vector generators to allow running fully offline.
+
+Start the backend:
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+### 2. Frontend Setup
+Navigate to the `frontend` folder and install dependencies:
+```bash
+cd ../frontend
+npm install
+```
+
+Start the Vite development server:
+```bash
+npm run dev
+```
+
+---
+
+## 🐳 Docker Deployment (All Services)
+
+You can spin up the entire application stack—including Qdrant, the API, and the React frontend—using Docker Compose.
+
+1. Ensure your root `.env` is configured.
+2. Spin up the containers:
+   ```bash
+   docker-compose up --build
+   ```
+3. Open:
+   - Frontend app: `http://localhost:3000`
+   - Swagger API docs: `http://localhost:8000/docs`
+   - Qdrant Dashboard: `http://localhost:6333/dashboard`
+
+---
+
+## 🧪 Automated Testing
+
+Unit tests bypass external database setups and test the LangGraph workflow using an in-memory SQLite setup:
+```bash
+cd backend
+pytest
+```
+
+---
+
+## 🌐 Deploying to the Web
+For detailed, step-by-step instructions on deploying the project for free (using **Neon PostgreSQL**, **Render**, and **Vercel**), refer to our [Deployment Guide](backend/../deployment_guide.md).
