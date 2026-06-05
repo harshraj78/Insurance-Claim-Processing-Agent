@@ -55,7 +55,7 @@ async def get_current_user(
             if not user:
                 # Dynamically create the user from the JWT claims to support external Clerk signup
                 # Default role depends on metadata or default to customer
-                role = payload.get("role", "customer")
+                role = payload.get("role") or "customer"
                 user = User(email=email, password_hash="external_auth", role=role)
                 session.add(user)
                 session.commit()

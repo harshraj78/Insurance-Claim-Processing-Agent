@@ -75,10 +75,9 @@ sequenceDiagram
 To send the correct database fields in the token payload:
 1. Go to your **Clerk Dashboard** > **JWT Templates** > **New Template** > Select **Blank**.
 2. Name the template `neon_rls`.
-3. In the JSON editor, map the claims you want to expose to your FastAPI backend and Neon database:
+3. In the JSON editor, map the custom claims you want to expose to your FastAPI backend (Clerk automatically includes reserved claims like `sub`, `iss`, and `exp` under the hood):
    ```json
    {
-     "sub": "{{user.id}}",
      "email": "{{user.primary_email_address}}",
      "role": "{{user.public_metadata.role}}"
    }
