@@ -45,4 +45,10 @@ backend/.env.*
 *.db-shm
 *.db-wal
 
+# Evaluation reports & Resume files
+eval_report.md
+updated_resume.md
+resume.tex
+*.tex
+
 
