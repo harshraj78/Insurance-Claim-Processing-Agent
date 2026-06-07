@@ -50,6 +50,24 @@ graph TD
 
 ---
 
+## 🚀 Advanced AI Engineering Portfolio Features
+
+This platform showcases production-grade AI engineering patterns that go beyond basic LLM wrappers:
+
+1. **Stateful Graph Interrupts (LangGraph)**: Utilizes a persistent SQLite checkpointer memory to handle state management across human-in-the-loop validation barriers. The claim audit pipeline automatically pauses at the `Pause` barrier, persisting intermediate states until an underwriter resumes execution via human approval sign-off.
+2. **Advanced Semantic RAG Engine**:
+   - **Query Expansion**: Uses Gemini to expand simple treatment queries into 3 distinct clinical synonyms to maximize vector database lookup recall.
+   - **Qdrant Metadata Filtering**: Restricts searches dynamically to document partitions matching the active `policy_id`.
+   - **LLM-Based Re-ranking**: Integrates a structured Gemini scorer to de-duplicate and sort retrieved clauses by clinical relevance, keeping only the top 3 high-confidence rules.
+3. **Automated LLM-as-a-Judge Evaluations**: Programmatically tests a suite of claims scenarios (under limit, waiting periods, general exclusions, over limit) and sends output states to a secondary LLM judge to verify arithmetic, clinical reasoning, and decision accuracy.
+4. **LangSmith Trace & Dataset Integration**: Integrates the `langsmith` Client SDK to automatically register the verification dataset on the LangSmith dashboard, upload test cases, and log traced diagnostic executions.
+5. **Role-Based Access Control (RBAC) & Secure Demo Bypass**:
+   - Integrates **Clerk JWT authorization** natively with backend FastAPI dependencies.
+   - **Granular Data Isolation**: Restricts API endpoints so Patients can only view claims they submitted, while Claims Officers manage the system underwriting queue.
+   - **Interactive Persona Login Selector**: Features a premium business landing page with toggleable personas for seamless offline developer testing without third-party dependencies.
+
+---
+
 ## 📸 Interface Preview
 
 ### 1. Claims Operations Dashboard
