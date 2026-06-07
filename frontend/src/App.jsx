@@ -765,7 +765,7 @@ function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRol
                       <input 
                         type="text" 
                         className="form-input" 
-                        placeholder="e.g. MR. HARSHR AJ"
+                        placeholder="e.g. MR. HARSH RAJ"
                         value={regHolder}
                         onChange={(e) => setRegHolder(e.target.value)}
                         required
