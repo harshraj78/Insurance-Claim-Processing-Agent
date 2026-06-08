@@ -17,9 +17,9 @@ import {
 } from 'lucide-react';
 import { SignedIn, SignedOut, SignIn, useAuth, UserButton } from '@clerk/clerk-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-function LoginScreen({ onLogin, isClerkEnabled }) {
+function LoginScreen({ onLogin, isClerkEnabled, onToggleBypass }) {
   const scrollToGateway = () => {
     document.getElementById('login-gateway')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -177,6 +177,17 @@ function LoginScreen({ onLogin, isClerkEnabled }) {
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <SignIn routing="hash" />
               </div>
+              {onToggleBypass && (
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1rem' }}>
+                  <button 
+                    onClick={onToggleBypass}
+                    className="view-btn"
+                    style={{ width: '100%', padding: '0.6rem', fontSize: '0.85rem', cursor: 'pointer' }}
+                  >
+                    🔧 Switch to Developer Demo Bypass Mode
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div>
@@ -239,6 +250,17 @@ function LoginScreen({ onLogin, isClerkEnabled }) {
                   </div>
                 </div>
               </div>
+              {onToggleBypass && (
+                <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '1.25rem' }}>
+                  <button 
+                    onClick={onToggleBypass}
+                    className="view-btn"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', cursor: 'pointer' }}
+                  >
+                    🔐 Return to Clerk Production Login
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -292,14 +314,15 @@ function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRol
   // Request Headers Generator for Clerk JWT / Mock Developer Mode
   const getRequestHeaders = async (isMultipart = false) => {
     const baseHeaders = {};
-    if (isMultipart) {
-      baseHeaders['Content-Type'] = 'multipart/form-data';
-    }
+    // Let Axios handle boundaries automatically for multipart/form-data by NOT setting Content-Type header.
+    // If we specify multipart/form-data manually, the browser boundary is omitted, leading to backend parse failures.
     if (mockMode) {
       baseHeaders['X-Mock-User'] = currentUser?.email || 'customer@example.com';
     } else {
       const token = await getToken({ template: 'neon_rls' });
-      baseHeaders['Authorization'] = `Bearer ${token}`;
+      if (token) {
+        baseHeaders['Authorization'] = `Bearer ${token}`;
+      }
     }
     return { headers: baseHeaders };
   };
@@ -434,17 +457,16 @@ function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRol
   const handleHumanAction = async (action) => {
     if (!selectedClaimId) return;
     
-    const formData = new FormData();
-    formData.append('action', action);
-    formData.append('notes', officerNotes);
-    formData.append('officer_email', currentUser?.email || 'officer@example.com');
+    const params = new URLSearchParams();
+    params.append('action', action);
+    params.append('notes', officerNotes);
+    params.append('officer_email', currentUser?.email || 'officer@example.com');
     
     setLoading(true);
     setActionMsg(null);
     try {
       const headers = await getRequestHeaders();
-      headers.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      const res = await axios.post(`${API_BASE}/claims/${selectedClaimId}/action`, formData, headers);
+      const res = await axios.post(`${API_BASE}/claims/${selectedClaimId}/action`, params, headers);
       setActionMsg({ type: 'success', text: res.data.message });
       setOfficerNotes('');
       // Reload details & queue
@@ -1057,14 +1079,14 @@ function DashboardSecure() {
   return <Dashboard mockMode={false} getToken={getToken} />;
 }
 
-function AuthWrapper() {
+function AuthWrapper({ onToggleBypass }) {
   return (
     <>
       <SignedIn>
         <DashboardSecure />
       </SignedIn>
       <SignedOut>
-        <LoginScreen isClerkEnabled={true} />
+        <LoginScreen isClerkEnabled={true} onToggleBypass={onToggleBypass} />
       </SignedOut>
     </>
   );
@@ -1073,9 +1095,10 @@ function AuthWrapper() {
 function App() {
   const isClerkEnabled = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
   const [demoUser, setDemoUser] = useState(null);
+  const [forceBypass, setForceBypass] = useState(false);
 
-  if (isClerkEnabled) {
-    return <AuthWrapper />;
+  if (isClerkEnabled && !forceBypass) {
+    return <AuthWrapper onToggleBypass={() => setForceBypass(true)} />;
   }
 
   // Demo mode with persona selector
@@ -1084,6 +1107,7 @@ function App() {
       <LoginScreen 
         isClerkEnabled={false} 
         onLogin={(email, role) => setDemoUser({ email, role })} 
+        onToggleBypass={isClerkEnabled ? () => setForceBypass(false) : null}
       />
     );
   }

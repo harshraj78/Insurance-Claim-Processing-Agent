@@ -91,10 +91,12 @@ async def get_current_user(
     stmt = select(User).where(User.email == mock_email)
     user = session.exec(stmt).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Mock user '{mock_email}' not found in database. Seed the database first."
-        )
+        # Dynamically create the mock user to prevent 401s in environments where seeding didn't run
+        role = "claim_officer" if "officer" in mock_email else "customer"
+        user = User(email=mock_email, password_hash="mock_auth", role=role)
+        session.add(user)
+        session.commit()
+        session.refresh(user)
     return user
 
 class RoleChecker:
