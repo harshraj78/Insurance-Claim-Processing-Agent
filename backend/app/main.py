@@ -160,14 +160,17 @@ def submit_claim(
             detail=f"Policy number '{policy_number}' not found."
         )
     
-    # Get Customer User id
+    # Get Customer User id (or dynamically create/fallback to current_user if missing)
     user_stmt = select(User).where(User.email == customer_email)
     db_user = session.exec(user_stmt).first()
     if not db_user:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"Customer with email '{customer_email}' not found."
-        )
+        if current_user and current_user.email == customer_email:
+            db_user = current_user
+        else:
+            db_user = User(email=customer_email, password_hash="auto_created", role="customer")
+            session.add(db_user)
+            session.commit()
+            session.refresh(db_user)
         
     # Save PDF (ensuring directory exists dynamically)
     os.makedirs(CLAIMS_DIR, exist_ok=True)
@@ -316,14 +319,17 @@ def claim_human_action(
             detail=f"Claim is in '{claim.status}' state. Cannot submit action."
         )
         
-    # Get Claim Officer id
+    # Get Claim Officer id (or dynamically create/fallback to current_user if missing)
     user_stmt = select(User).where(User.email == officer_email)
     db_user = session.exec(user_stmt).first()
     if not db_user:
-        raise HTTPException(
-            status_code=404, 
-            detail=f"Officer with email '{officer_email}' not found."
-        )
+        if current_user and current_user.email == officer_email:
+            db_user = current_user
+        else:
+            db_user = User(email=officer_email, password_hash="auto_created", role="claim_officer")
+            session.add(db_user)
+            session.commit()
+            session.refresh(db_user)
     
     # 1. Update the graph state with human action decision
     config = {"configurable": {"thread_id": str(id)}}
