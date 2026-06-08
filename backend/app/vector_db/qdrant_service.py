@@ -73,9 +73,9 @@ def upsert_policy_clauses(policy_id: str, clauses: List[str]):
 def search_policy_clauses(policy_id: str, query: str, limit: int = 3) -> List[str]:
     query_vector = get_embedding(query)
     
-    search_result = client_instance.search(
+    search_result = client_instance.query_points(
         collection_name=COLLECTION_NAME,
-        query_vector=query_vector,
+        query=query_vector,
         query_filter=Filter(
             must=[
                 FieldCondition(
@@ -87,4 +87,4 @@ def search_policy_clauses(policy_id: str, query: str, limit: int = 3) -> List[st
         limit=limit
     )
     
-    return [result.payload["clause_text"] for result in search_result]
+    return [result.payload["clause_text"] for result in search_result.points]
