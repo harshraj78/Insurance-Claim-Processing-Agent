@@ -73,6 +73,7 @@ def upload_policy(
     Saves policy metadata in DB, parses policy document, 
     and vectorizes clauses into Qdrant for RAG lookups.
     """
+    policy_number = policy_number.strip().upper()
     # Check if policy number already exists
     stmt = select(Policy).where(Policy.policy_number == policy_number)
     if session.exec(stmt).first():
@@ -151,6 +152,7 @@ def submit_claim(
     Submits a claim request, saves files, inserts DB claim, 
     and initializes the LangGraph agent state thread.
     """
+    policy_number = policy_number.strip().upper()
     # Verify policy exists
     policy_stmt = select(Policy).where(Policy.policy_number == policy_number)
     db_policy = session.exec(policy_stmt).first()
