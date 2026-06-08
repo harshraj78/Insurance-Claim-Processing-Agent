@@ -414,7 +414,7 @@ function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRol
       setClaimFile(null);
       fetchClaims();
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Claim submission failed.';
+      const msg = err.response?.data?.detail || err.message || 'Claim submission failed.';
       setClaimMsg({ type: 'error', text: msg });
     } finally {
       setLoading(false);
@@ -446,7 +446,7 @@ function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRol
       setRegLimit('');
       setPolicyFile(null);
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Policy upload failed.';
+      const msg = err.response?.data?.detail || err.message || 'Policy upload failed.';
       setPolicyMsg({ type: 'error', text: msg });
     } finally {
       setLoading(false);
@@ -473,7 +473,7 @@ function Dashboard({ mockMode = true, getToken, initialUserEmail, initialUserRol
       fetchClaimDetails(selectedClaimId);
       fetchClaims();
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Action failed.';
+      const msg = err.response?.data?.detail || err.message || 'Action failed.';
       setActionMsg({ type: 'error', text: msg });
     } finally {
       setLoading(false);

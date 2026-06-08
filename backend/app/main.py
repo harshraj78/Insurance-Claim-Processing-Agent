@@ -24,7 +24,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -222,9 +222,13 @@ def submit_claim(
         compiled_graph.invoke(initial_state, config)
     except Exception as e:
         print(f"LangGraph execution exception: {e}")
-        db_claim.status = "error"
-        session.add(db_claim)
-        session.commit()
+        try:
+            session.rollback()  # Rollback any failed transaction to clean the session state
+            db_claim.status = "error"
+            session.add(db_claim)
+            session.commit()
+        except Exception as db_err:
+            print(f"Failed to update claim status to error: {db_err}")
         raise HTTPException(status_code=500, detail=f"Agent workflow crashed: {e}")
     
     # Update claim status in PostgreSQL to pending_approval (since it hit the interrupt)
