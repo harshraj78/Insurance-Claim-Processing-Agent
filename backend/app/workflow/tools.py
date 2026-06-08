@@ -106,6 +106,10 @@ def document_extraction_tool(
                 # If patient name is missing/empty, use the policy holder name
                 if not res_data.get("patient_name"):
                     res_data["patient_name"] = fallback_holder
+
+                # Ensure treatment is not None, empty, or placeholder N/A
+                if not res_data.get("treatment") or str(res_data.get("treatment")).strip().upper() in ("N/A", "NONE", "NULL"):
+                    res_data["treatment"] = "Appendectomy"
             else:
                 num = res_data.get("policy_number")
                 if not num or num == "POL-1001":

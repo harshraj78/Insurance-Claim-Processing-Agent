@@ -100,7 +100,7 @@ def policy_lookup_node(state: ClaimState) -> Dict[str, Any]:
     Node 2: Search vector DB for coverage clauses matching the claimed treatment.
     """
     print("--- [Node: PolicyLookupNode] ---")
-    treatment = state["extracted_claim"].get("treatment", "Appendectomy")
+    treatment = state.get("extracted_claim", {}).get("treatment") or "Appendectomy"
     
     # Retrieve clauses using RAG
     clauses = policy_lookup_tool(state["policy_id"], treatment)
@@ -201,7 +201,7 @@ def eligibility_decision_node(state: ClaimState) -> Dict[str, Any]:
     clauses_text = "\n".join(retrieved_clauses)
     
     extracted_claim = state.get("extracted_claim") or {}
-    treatment = extracted_claim.get("treatment", "Appendectomy")
+    treatment = extracted_claim.get("treatment") or "Appendectomy"
     
     coverage_math = state.get("coverage_math") or {}
     exceeds_limit = coverage_math.get("exceeds_limit", False)
